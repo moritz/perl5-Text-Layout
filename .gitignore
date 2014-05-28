@@ -11,3 +11,5 @@ cover_db
 pod2htm*.tmp
 Text-PageLayout-*
 *.swp
+MYMETA.yml
+MANIFEST*
