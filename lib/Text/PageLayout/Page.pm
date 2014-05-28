@@ -46,7 +46,7 @@ sub _apply {
     return $self->process_template->(
         template    => $e,
         element     => $elem,
-        page        => $self->page_number,
+        page_number => $self->page_number,
         total_pages => $self->total_pages,
     );
 }

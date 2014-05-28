@@ -5,12 +5,7 @@ use strict;
 use warnings;
 use utf8;
 
-use Moose::Role;
-
-has paragraph_separator => (
-    is      => 'rw',
-    default => sub { "\n" },
-);
+use Moo::Role;
 
 has header => (
     is          => 'ro',

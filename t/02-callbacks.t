@@ -19,7 +19,7 @@ sub foot {
 
 sub process_template {
     my %param = @_;
-    sprintf $param{template}, $param{page}, $param{total_pages};
+    sprintf $param{template}, $param{page_number}, $param{total_pages};
 }
 
 sub split_paragraph {

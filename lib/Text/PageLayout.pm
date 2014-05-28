@@ -5,16 +5,6 @@ use 5.010;
 use strict;
 use warnings;
 
-=head1 NAME
-
-Text::PageLayout - Assemble paragraphs onto pages.
-
-=head1 VERSION
-
-Version 0.01
-
-=cut
-
 our $VERSION = '0.01';
 
 use Text::PageLayout::Page;
@@ -88,7 +78,7 @@ sub pages {
             my ($c1, $c2) = $self->split_paragraph->(
                 paragraph   => $paragraph,
                 max_lines   => $goal - $lines_used - $sep_lines,
-                page        => $current_page,
+                page_number => $current_page,
             );
             my $c1_lines = $self->line_count($c1);
             if ($c1_lines + $lines_used <= $goal) {
@@ -139,23 +129,179 @@ sub _get_elem {
     my ($self, $elem, $page) = @_;
     my $e = $self->$elem();
     if (ref $e && reftype($e) eq 'CODE') {
-        $e = $e->(page => $page);
+        $e = $e->(page_number => $page);
     }
     return $e;
 }
 
+=head1 NAME
+
+Text::PageLayout - Distribute paragraphs onto pages, with headers and footers.
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
+    use 5.010;
     use Text::PageLayout;
 
-    my $foo = Text::PageLayout->new();
-    ...
+    my @paragraphs = ("a\nb\nc\nd\n") x 6,
 
+    # simple example
+    my $layout = Text::PageLayout->new(
+        page_size   => 20,      # number of lines per page
+        header      => "head\n",
+        footer      => "foot\n",
+        paragraphs  => \@paragraphs,    # REQUIRED
+    );
+
+    for my $p ( $layout->pages ) {
+        say "Page No. ", $p->page_number;
+        say $p;
+    }
+
+    # more complex example:
+    sub header {
+        my %param = @_;
+        if ($param{page_number} == 1) {
+            return "header for first page\n";
+        }
+        return "== page %d of %d == \n";
+    }
+    sub process_template {
+        my %param = @_;
+        my $t = $param{template};
+        if ($t =~ /%/) {
+            return sprintf $t, $param{page_number}, $param{total_pages};
+        }
+        else {
+            return $t;
+        }
+    }
+    sub split_paragraph {
+        my %param = @_;
+        my ($first, $rest) = split /\n\n/, $param{paragraph}, 2;
+        return ("$first\n", $rest);
+    }
+
+    
+    $layout = Text::PageLayout->new(
+        page_size           => 42,
+        tolerance           => 2,
+        paragraphs          => [ ... ],
+        separator           => "\n\n",
+        footer              => "\nCopyright (C) 2014 by M. Lenz\n",
+        header              => \&header,
+        process_template    => \&process_template,
+        split_paragraph     => \&split_paragraph,
+    );
+
+=head1 DESCRIPTION
+
+Text::PageLayout breaks up a list of paragraphs into pages. It supports
+headers and footers, possibly varying by page number.
+
+It operates under the assumption that all text blocks that are passed to
+(header, footer, paragraphs, separator) are either the empty string, or
+terminated by a newline. It also assumes that all those text blocks are
+properly line-wrapped already.
+
+The header and footer can either be strings, or subroutines that will be
+called, and must return the string that is then used as a header or a footer.
+In both cases, the string that is used as header or footer can be
+post-processed with a custom callback C<process_template>.
+
+The layout of a result page is always the header first, then as many
+paragraphs as fit on the page, separated by C<separator>, followed by
+as many blank lines as necessary to fill the page, followed by the footer.
+
+If the naive layouting algorithm (take as many paragraphs as fit) leaves
+more than C<tolerance> empty fill lines, the C<split_paragraph> callback is
+called, which can attempt to split the paragraph into small chunks, which are
+nicer to format.
+
+=head1 ATTRIBUTES
+
+Attributes should be set in the constructor (C<< Text::PageLayout->new >>),
+but most of them can also be set later on, for example the C<page_size>
+attribute with C<< $layout->page_size(42) >>.
+
+Note that all callbacks receive named arguments, i.e. are called like this:
+
+    $callback->(
+        page_number => 1,
+        total_pages => 2,
+    );
+
+Callbacks I<must> accept additional named arguments (future versions of this
+module might pass more arguments).
+
+=head2 page_size
+
+Number of lines on a result page.
+
+Default: 67
+
+=head2 tolerance
+
+Number of empty lines to accept on a page before attempting to split
+paragraphs.
+
+Default: 6 (subject to change)
+
+=head2 paragraphs
+
+An array reference of paragraphs (newline-terminated strings) that is to be
+split up in pages.
+
+This attribute is required.
+
+=head2 header
+
+A string that is used as a per-page header (or header template, if C<process_template> is
+set), or a callback that returns the header.
+
+If used as a callback, it receives C<page_number> as a named argument.
+
+Default: empty string.
+
+=head2 footer
+
+A string that is used as a per-page footer (or footer template, if C<process_template> is
+set), or a callback that returns the footer.
+
+If used as a callback, it receives C<page_number> as a named argument.
+
+Default: empty string.
+
+=head2 separator
+
+A string that is used to separate multiple paragraphs on the same page.
+
+Default: "\n" (newline)
+
+=head2 split_paragraph
+
+A callback that can split a paragraph into smaller chunks to create nicer
+layouts. If paragraphs exist that exceed the number of free lines on a page
+that only contains header or footer, this callback B<must> split such a
+paragraph into smaller chunks, the first of which must fit on a page.
+
+The return value must be a list of paragraphs.
+
+It receives the arguments C<paragraph>, C<max_lines> and C<page_number>.
+C<max_lines> is the maximal number of lines that fit on the current page.
+
+The default C<split_paragraph> simply splits off the first C<max_lines> as a
+sparate chunk, without any consideration for its content.
+
+=head2 process_template
+
+A callback that turns a header or footer template into the actual header or
+footer. It receives the named arguments C<template>, C<element> (which can be
+C<header> or C<footer>), C<page_number> and C<total_pages>.
+
+It must return a string with the same number of lines as the C<template>.
+
+The default template callback simply returns the template.
 
 =head1 METHODS
 
