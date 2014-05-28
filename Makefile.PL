@@ -3,6 +3,10 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker;
 
+# avoid warnings in version number comparsion when version number
+# contains an underscore
+no warnings 'numeric';
+
 WriteMakefile(
     NAME                => 'Text::PageLayout',
     AUTHOR              => q{Moritz Lenz <moritz@faui2k3.org>},
