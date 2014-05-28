@@ -9,12 +9,12 @@ use Text::PageLayout;
 
 sub head {
     my %param = @_;
-    return "head %d/%d ($param{page})\n"
+    return "head %d/%d ($param{page_number})\n"
 };
 
 sub foot {
     my %param = @_;
-    return "foot %d/%d ($param{page})\n"
+    return "foot %d/%d ($param{page_number})\n"
 };
 
 sub process_template {
