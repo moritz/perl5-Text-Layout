@@ -126,6 +126,7 @@ sub pages {
             footer              => $footer,
             process_template    => $self->process_template,
             bottom_filler       => "\n" x ($goal - $lines_used),
+            separator           => $separator,
         );
     }
     for my $p (@pages) {
