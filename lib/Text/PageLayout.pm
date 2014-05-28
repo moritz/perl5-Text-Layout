@@ -305,7 +305,15 @@ The default template callback simply returns the template.
 
 =head1 METHODS
 
-=head2 function1
+=head2 new
+
+Creates a new C<Text::PageLayout> object. Expects attributes as named
+arguments, with C<paragraphs> being the only required attribute.
+
+=head2 pages
+
+Returns a list of C<Text::PageLayout::Page> objects (which you can use like
+strings, if you want to).
 
 =head1 AUTHOR
 
@@ -318,14 +326,11 @@ the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Text-PageL
 automatically be notified of progress on your bug as I make changes.
 
 
-
-
 =head1 SUPPORT
 
 You can find documentation for this module with the perldoc command.
 
     perldoc Text::PageLayout
-
 
 You can also look for information at:
 
@@ -349,9 +354,10 @@ L<http://search.cpan.org/dist/Text-PageLayout/>
 
 =back
 
-
 =head1 ACKNOWLEDGEMENTS
 
+Thanks to L<noris network AG|http://www.noris.net/> for letting the author
+develop and open-source this module.
 
 =head1 LICENSE AND COPYRIGHT
 
@@ -364,6 +370,10 @@ by the Free Software Foundation; or the Artistic License.
 
 See http://dev.perl.org/licenses/ for more information.
 
+=head1 DEVELOPMENT
+
+Development happens at github, see
+L<https://github.com/moritz/perl5-Text-Layout>. Pull requests welcome!
 
 =cut
 
