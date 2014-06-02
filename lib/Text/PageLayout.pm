@@ -5,7 +5,7 @@ use 5.010;
 use strict;
 use warnings;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use Text::PageLayout::Page;
 use Moo;
@@ -21,6 +21,11 @@ has page_size  => (
 has tolerance  => (
     is          => 'rw',
     default     => sub { 6 },
+);
+
+has fillup_pages  => (
+    is          => 'rw',
+    default     => sub { 1 },
 );
 
 has split_paragraph => (
@@ -96,7 +101,9 @@ sub pages {
                 header              => $header,
                 footer              => $footer,
                 process_template    => $self->process_template,
-                bottom_filler       => "\n" x ($goal - $lines_used),
+                bottom_filler       => $self->fillup_pages
+                                        ? "\n" x ($goal - $lines_used)
+                                        : '',
                 separator           => $separator,
             );
             $current_page++;
@@ -115,7 +122,9 @@ sub pages {
             header              => $header,
             footer              => $footer,
             process_template    => $self->process_template,
-            bottom_filler       => "\n" x ($goal - $lines_used),
+            bottom_filler       => $self->fillup_pages
+                                    ? "\n" x ($goal - $lines_used)
+                                    : '',
             separator           => $separator,
         );
     }
@@ -211,7 +220,8 @@ post-processed with a custom callback C<process_template>.
 
 The layout of a result page is always the header first, then as many
 paragraphs as fit on the page, separated by C<separator>, followed by
-as many blank lines as necessary to fill the page, followed by the footer.
+as many blank lines as necessary to fill the page (if C<fillup_pages> is set,
+which it is by default), followed by the footer.
 
 If the naive layouting algorithm (take as many paragraphs as fit) leaves
 more than C<tolerance> empty fill lines, the C<split_paragraph> callback is
@@ -236,7 +246,7 @@ module might pass more arguments).
 
 =head2 page_size
 
-Number of lines on a result page.
+Max. number of lines on a result page.
 
 Default: 67
 
@@ -271,6 +281,13 @@ set), or a callback that returns the footer.
 If used as a callback, it receives C<page_number> as a named argument.
 
 Default: empty string.
+
+=head2 fillup_pages
+
+If set to a true value, pages are filled up to their maximum length by
+adding newlines before the footer.
+
+Default: 1.
 
 =head2 separator
 

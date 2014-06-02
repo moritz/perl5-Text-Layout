@@ -3,7 +3,7 @@ use warnings;
 use utf8;
 use 5.010;
 
-use Test::More tests => 6;
+use Test::More tests => 8;
 
 use Text::PageLayout;
 
@@ -38,4 +38,10 @@ for my $p (0..1) {
 }
 
 is "$pages[0]", "$head$block\n$block\n$block\n\n$foot", "First page";
-is "$pages[1]", "$head$block\n$block\n\n\n\n\n\n\n$foot", "First page";
+is "$pages[1]", "$head$block\n$block\n\n\n\n\n\n\n$foot", "Second page";
+
+$l->fillup_pages(0);
+@pages = $l->pages;
+
+is "$pages[0]", "$head$block\n$block\n$block$foot", "First page, no fillup";
+is "$pages[1]", "$head$block\n$block$foot", "Second page, no fillup";
