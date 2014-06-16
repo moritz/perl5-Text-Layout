@@ -1,5 +1,5 @@
 ^blib
-^Makefile
+^Makefile$
 ^Makefile\.old
 ^Build
 ^Build.bat
@@ -14,3 +14,4 @@
 ^\.git
 ^\.svn
 ^MANIFEST\.
+^MYMETA

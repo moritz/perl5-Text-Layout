@@ -1,5 +1,8 @@
 Revision history for Text-PageLayout
 
+0.04    2014-06-16
+        Fixed distribution (inclusion of Makefile.PL)
+
 0.03    2014-06-02
         fillup_pages option, defualting to 1.
 
