@@ -1,5 +1,8 @@
 Revision history for Text-PageLayout
 
+0.04    2014-07-04
+        Better handling of over-long paragraphs
+
 0.04    2014-06-16
         Fixed distribution (inclusion of Makefile.PL)
 

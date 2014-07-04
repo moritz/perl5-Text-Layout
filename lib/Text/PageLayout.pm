@@ -5,7 +5,7 @@ use 5.010;
 use strict;
 use warnings;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use Text::PageLayout::Page;
 use Moo;
@@ -51,10 +51,7 @@ sub line_count {
 
 sub pages {
     my $self = shift;
-    my $pars = $self->paragraphs;
-
-    my @pages;
-
+    my @pars = @{ $self->paragraphs };
     my $separator    = $self->separator;
     my $sep_lines    = $self->line_count($separator);
     my $tolerance    = $self->tolerance;
@@ -63,35 +60,53 @@ sub pages {
     my $header       = $self->_get_elem('header', $current_page);
     my $footer       = $self->_get_elem('footer', $current_page);
     my $lines_used   = $self->line_count($header) + $self->line_count($footer);
+
+    my @pages;
     my @current_pars;
 
-    for my $idx (0..$#$pars) {
-        my $paragraph = $pars->[$idx];
+    while (@pars) {
+        my $paragraph = shift @pars;
         my $l = $self->line_count($paragraph);
 
         my $start_new_page = 0;
-        if ( $lines_used + $l + $sep_lines <= $goal ) {
-            $lines_used += $l;
-            $lines_used += $sep_lines if @current_pars;
+        # for a page with a single paragraph, we have no separation
+        # lines, so the effective height introduce by separator is 0
+        my $effective_sep_lines = @current_pars ? $sep_lines : 0;
+
+        if ( $lines_used + $l + $effective_sep_lines <= $goal ) {
+            # use the paragraph
+            $lines_used += $l + $effective_sep_lines;
             push @current_pars, $paragraph;
         }
         elsif ( $lines_used + $tolerance >= $goal) {
+            # start a new page, re-schedule the current paragraph
             $start_new_page = 1;
+            unshift @pars, $paragraph;
         }
         else {
+            # no such luck; start a new page, potentially by
+            # splitting the paragraph
             $start_new_page = 1;
             my ($c1, $c2) = $self->split_paragraph->(
                 paragraph   => $paragraph,
-                max_lines   => $goal - $lines_used - $sep_lines,
+                max_lines   => $goal - $lines_used - $effective_sep_lines,
                 page_number => $current_page,
             );
             my $c1_lines = $self->line_count($c1);
-            if ($c1_lines + $lines_used <= $goal) {
+            if ($c1_lines + $lines_used + $effective_sep_lines <= $goal) {
                 # accept the split
-                $lines_used += $c1_lines;
-                $lines_used += $sep_lines if @current_pars;
+                $lines_used += $c1_lines + $effective_sep_lines;
                 push @current_pars, $c1;
-                $paragraph = $c2;
+                # re-schedule the second chunk
+                unshift @pars, $c2;
+            }
+            elsif (!@current_pars) {
+                my $message = sprintf "Paragraph too long even after splitting (%d lines) to fit on a page (max height %d, header and foot take up %d lines in total)\n",
+                   $c1_lines,
+                   $goal,
+                   $lines_used;
+                require Carp;
+                Carp::croak($message);
             }
         }
         if ($start_new_page) {
@@ -107,11 +122,10 @@ sub pages {
                 separator           => $separator,
             );
             $current_page++;
-            @current_pars = ($paragraph);
+            @current_pars = ();
             $header       = $self->_get_elem('header', $current_page);
             $footer       = $self->_get_elem('footer', $current_page);
-            $lines_used   = $self->line_count($header) + $self->line_count($footer)
-                            + $self->line_count($paragraph);
+            $lines_used   = $self->line_count($header) + $self->line_count($footer);
         }
     }
     if (@current_pars) {
